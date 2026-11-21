@@ -1,0 +1,12 @@
+# Tested on Google Colab (November 2026, Python 3, NVIDIA T4).
+# torch, torchvision, transformers, numpy, pandas, scikit-learn and pillow come preinstalled on Colab.
+torch
+torchvision
+transformers
+peft
+datasets
+scikit-learn
+numpy
+pandas
+pillow
+gdown
