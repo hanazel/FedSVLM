@@ -7,7 +7,7 @@ Code, logs and results for the term paper of the same title (Natural Language Pr
 
 ## Overview
 
-We train Light-MFND, a small vision-language model for multimodal fake news detection (CLIP ViT-B/32 adapted with LoRA, with cross-attention fusion; Nguyen, Phan & Le, 2026), with federated averaging (FedAvg). Only the LoRA, fusion and classifier parameters are exchanged (2.07 M parameters, 8.27 MB per update). We call this setup **FedSVLM**. We also study **FedSVLM-LF**, a late-fusion variant in which an image-only and a text-only model are trained with FedAvg and their probabilities are averaged (1.97 MB per round in total).
+We train Light-MFND, a small vision-language model for multimodal fake news detection (CLIP ViT-B/32 adapted with LoRA, with cross-attention fusion; Nguyen, Phan & Le, 2026), with federated averaging (FedAvg). Only the LoRA, fusion and classifier parameters are exchanged (2.07 M parameters, 8.27 MB per update). We call this setup **FedSVLM**. We also study **FedSVLM-LF**, a late-fusion variant in which an image-only and a text-only model are trained with FedAvg and their probabilities are averaged (1.97 MB per client per round).
 
 Experiments use two datasets:
 
@@ -29,12 +29,16 @@ FedSVLM/
 ├── notebooks/
 │   ├── 01_MiRAGeNews_FedSVLM.ipynb         # all MiRAGeNews experiments
 │   └── 02_FineFake_FedSVLM.ipynb           # FineFake download, preprocessing and experiments
-└── results/
-    ├── results_miragenews.json             # 45 runs: metrics per test set (+ per-round logs)
-    └── results_finefake.json               # all FineFake runs and analyses
+├── results/
+│   ├── results_miragenews.json             # 45 result entries: metrics per test set (+ per-round logs)
+│   └── results_finefake.json               # all FineFake runs and analyses
+└── figures/
+    ├── make_fig1_method.py                 # Figure 1: method diagram (no results)
+    ├── make_fig2_source_shortcut.py        # Figure 2: reads results/results_finefake.json
+    └── fig1_method.*, fig2_source_shortcut.*  # rendered figures (PDF and PNG)
 ```
 
-Each notebook starts with a description of what it does, the run order, notes on how the saved outputs were produced, and a glossary for the Vietnamese labels that appear in code comments and printed outputs. All notebooks are saved **with their outputs**, so they can be read without re-running.
+The two experiment notebooks start with a description of what they do, the run order, notes on how the saved outputs were produced, and a glossary for the Vietnamese labels that appear in code comments and printed outputs; the data-preparation notebook has a short description. All notebooks are saved **with their outputs**, so they can be read without re-running.
 
 ## Data
 
@@ -46,11 +50,22 @@ The datasets are not included in this repository (size and licensing). Download 
 ## How to run
 
 1. Open the notebooks in Google Colab and select a GPU runtime (data preparation cells can run on CPU).
-2. The notebooks keep data, checkpoints and results in Google Drive under `MyDrive/NLP_project/fed/`. Change the `FED` path in the first cells if you use another location.
+2. The notebooks keep data, checkpoints and results in Google Drive under `MyDrive/NLP_project/fed/`. Change the Drive paths (`FED`, `FED_MIRAGE`) in the setup cells if you use another location.
 3. Run `data_prep/00_MiRAGeNews_preprocessing.ipynb`, then `notebooks/01_MiRAGeNews_FedSVLM.ipynb` (it creates `init.pt`, the shared LoRA initialisation also used by notebook 2), then `notebooks/02_FineFake_FedSVLM.ipynb`.
 4. Every experiment cell writes its own checkpoint and appends its result to the JSON file, so cells can be run one at a time and resumed after a disconnected session.
 
-Settings shared by all runs: AdamW, learning rate 1e-5, weight decay 0.01, batch size 16, fp16; LoRA r = 8, α = 16, dropout 0.1 on `q_proj` and `v_proj`; FedAvg with 20 rounds × 1 local epoch; the best round is chosen by validation AUC.
+### Reproducing the figures
+
+The figures need only Python and matplotlib (no GPU, no datasets). From the repository root:
+
+```
+python figures/make_fig1_method.py
+python figures/make_fig2_source_shortcut.py
+```
+
+`make_fig2_source_shortcut.py` reads every plotted value from `results/results_finefake.json`, prints each value next to the value reported in Table 7 of the paper, and stops without drawing if any of them differs.
+
+Settings shared by all CLIP-based runs: AdamW, learning rate 1e-5, weight decay 0.01, batch size 16, fp16; LoRA r = 8, α = 16, dropout 0.1 on `q_proj` and `v_proj`. Federated runs use 20 rounds × 1 local epoch (one extension uses 40 rounds) and keep the round with the best validation AUC.
 
 ## Main results
 
@@ -63,9 +78,9 @@ AUC in %. "± " is the standard deviation over runs (seeds); single runs have no
 | Centralized Light-MFND | 3 | 100.0 | 80.6 ± 1.1 | – |
 | Local-only (α = 0.5, mean of 5 clients) | 1 | 89.0 | 66.4 | – |
 | FedSVLM, α = 100 | 3 | 100.0 | 77.9 ± 0.9 | 8.27 |
-| FedSVLM, α = 0.5, split 0 | 3 | 100.0 | 86.1 ± 0.4 | 8.27 |
+| FedSVLM, α = 0.5, split 0 | 3 | 100.0 | 86.0 ± 0.4 | 8.27 |
 | FedSVLM, α = 0.5, split 1 / split 2 | 1 / 1 | 100.0 / 100.0 | 81.2 / 81.2 | 8.27 |
-| FedSVLM, α = 0.1 | 3 | 100.0 | 83.6 ± 0.7 | 8.27 |
+| FedSVLM, α = 0.1 | 3 | 100.0 | 83.5 ± 0.7 | 8.27 |
 | FedAvg, full fine-tuning, α = 0.5 | 1 | 99.7 | 72.4 | 611.4 |
 | Centralized late fusion (image + text) | 2 | 100.0 | 91.2 ± 0.4 | – |
 | FedSVLM-LF, α = 0.5, split 0 | 1 | 99.9 | 86.9 | 1.97 |
@@ -85,7 +100,7 @@ Caveats: OOD results depend strongly on the client partition (the high score of 
 | TF-IDF + SVM (text only) | 80.3 | 77.7 |
 | News source only (no text, no image) | 74.0 | 73.9 |
 
-A classifier that sees only the news source already reaches 74 AUC, and all models reach only about 59 AUC on average **within** each source. Source-balanced client resampling raises the mean within-source AUC of FedSVLM-LF from 59.0 to 64.1 but lowers pooled AUC from 82.4 to 74.8 (two runs each). Adding the knowledge embeddings provided with FineFake did not improve any metric.
+A classifier that sees only the news source already reaches 74 AUC, and all models trained in the standard way reach only 57–60 AUC on average **within** each source. Source-balanced client resampling raises the mean within-source AUC of FedSVLM-LF from 59.0 to 64.1 but lowers pooled AUC (test and OOD sets together) from 82.5 to 74.8 (mean of two runs each). Adding the knowledge embeddings provided with FineFake changed AUC by at most 0.3 points and did not improve within-source AUC.
 
 ## Acknowledgements
 
