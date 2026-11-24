@@ -2,8 +2,10 @@
 
 Code, logs and results for the term paper of the same title (Natural Language Processing course, Quy Nhon University, 2026).
 
-- **Author:** Thi-Han Cao (Cao Thị Hân), Department of Mathematics and Statistics, Quy Nhon University, caothihan.2005vta@gmail.com
-- **Supervisor:** Quang-Hung Le (lequanghung@qnu.edu.vn)
+**Authors**
+
+- Thi-Han Cao (Cao Thị Hân), Department of Mathematics and Statistics, Quy Nhon University, caothihan.2005vta@gmail.com
+- Quang-Hung Le (supervisor, corresponding author), Department of Information Technology, Quy Nhon University, lequanghung@qnu.edu.vn
 
 ## Overview
 
